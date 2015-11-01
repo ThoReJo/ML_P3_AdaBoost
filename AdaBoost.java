@@ -49,43 +49,7 @@ public class AdaBoost
 		}
 	}
 
-	private void sortDatasetInVariables(List<Mail> dataset_original)
-	{
-		// copy the dataset
-		List<Mail> dataset = dataset_original.subList(0, dataset_original.size());
-		// create a matrix to map the sorted lists of variables in x to the original dataset
-		int[][] variable_indices = new int[dataset.get(0).x.length][];
-		// loop through every variable
-		for (int variable_index = 0; variable_index < dataset.get(0).x.length; variable_index++)
-		{
-			variable_indices[variable_index] = orderBasedOnVariable(dataset_original, dataset, variable_index);
-		}
-	}
-
-	private int[] orderBasedOnVariable(List<Mail> originalDataset, List<Mail> dataset, int variable_index)
-	{
-		//TODO COMMENTS
-		int[] smallToBig = new int[dataset.size()];
-		Collections.sort(dataset, new Comparator<Mail>() 
-		{    
-			@Override
-			public int compare(Mail o1, Mail o2)
-			{
-				if (o1.x[variable_index] == o2.x[variable_index]) return 0;
-				return (o1.x[variable_index] < o2.x[variable_index]) ? -1 : 1;
-			}
-        });
-		
-		for (int index = 0; index < smallToBig.length; index++)
-		{	
-			int indexOfMailInOriginal = originalDataset.indexOf(dataset.get(index));
-			smallToBig[index] = indexOfMailInOriginal;
-		}
-		
-		return smallToBig;
-	}
-
-	private void sortDatasetInVariables_OLD(List<Mail> allData)
+	private void sortDatasetInVariables(List<Mail> allData)
 	{
 		// TODO Comment
 		sortedData = new DataPair[allData.get(0).x.length][];
