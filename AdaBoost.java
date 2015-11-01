@@ -175,6 +175,7 @@ public class AdaBoost
 		{
 			cumulativeValue += (alphas[index] * hypotheses[index].classify(mail));
 		}
+		// return -1 if the weighted classification is smaller than 0, and 1 otherwise
 		return cumulativeValue < 0 ? -1 : 1;
 	}
 }
