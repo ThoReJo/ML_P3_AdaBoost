@@ -15,6 +15,10 @@ public class AdaBoost
 	
 	private DataPair[][] sortedData;
 	
+	private HashMap<Mail,Integer> mapMailToOriginalIndex;
+	
+	private int[][] sortedOrderOfMails;
+	
 	// constructor for an AdaBoost algorithm, consisting of m hypotheses which train on
 	// the dataset
 	public AdaBoost(int numberOfHypotheses, List<Mail> dataset)
@@ -29,6 +33,7 @@ public class AdaBoost
 		for (int i = 0; i < weights.length; i++)
 			weights[i] = 1.0/dataset.size();
 		alphas = new double[numberOfHypotheses];
+		createMappingFromMailToOriginalIndex();
 		sortDatasetInVariables(dataset);
 		
 		/*
@@ -39,7 +44,7 @@ public class AdaBoost
 			// choose a random feature <- {0,56}
 			int feature = (int) (Math.random() * 57.0);
 			// initialize hypothesis
-			hypotheses[hypothesis_index] = new BaseLearner(sortedData, weights, feature, this);
+			hypotheses[hypothesis_index] = new BaseLearner(weights, feature, this);
 			// calculate the error (cumulative weight of all misclassified points/ total weight)
 			double error = calculateError(hypothesis_index);
 			// calculate the alpha value for this hypothesis (alpha <- 1/2 ln((1 - err)/err)
@@ -58,13 +63,15 @@ public class AdaBoost
 		// loop through every variable
 		for (int variable_index = 0; variable_index < dataset.get(0).x.length; variable_index++)
 		{
-			variable_indices[variable_index] = orderBasedOnVariable(dataset_original, dataset, variable_index);
+			variable_indices[variable_index] = orderBasedOnVariable(dataset, variable_index);
 		}
+		sortedOrderOfMails = variable_indices;
 	}
 
-	private int[] orderBasedOnVariable(List<Mail> originalDataset, List<Mail> dataset, int variable_index)
+	private int[] orderBasedOnVariable(List<Mail> dataset, int variable_index)
 	{
 		//TODO COMMENTS
+		
 		int[] smallToBig = new int[dataset.size()];
 		Collections.sort(dataset, new Comparator<Mail>() 
 		{    
@@ -78,33 +85,13 @@ public class AdaBoost
 		
 		for (int index = 0; index < smallToBig.length; index++)
 		{	
-			int indexOfMailInOriginal = originalDataset.indexOf(dataset.get(index));
+			Mail between = dataset.get(index);
+			int indexOfMailInOriginal = mapMailToOriginalIndex.get(between);
 			smallToBig[index] = indexOfMailInOriginal;
 		}
 		
 		return smallToBig;
 	}
-
-	private void sortDatasetInVariables_OLD(List<Mail> allData)
-	{
-		// TODO Comment
-		sortedData = new DataPair[allData.get(0).x.length][];
-		
-		for (int i = 0; i < sortedData.length; i++)
-			sortedData[i] = new DataPair[allData.size()];
-		
-		for (int dataPoint = 0; dataPoint < allData.size(); dataPoint++)
-		{
-			for (int var = 0; var < sortedData.length; var++)
-			{
-				sortedData[var][dataPoint] = new DataPair(dataPoint, allData.get(dataPoint).x[var]);
-			}
-		}
-		// sort every variable array
-		for (int variable_index = 0; variable_index < sortedData.length; variable_index++)
-			Arrays.sort(sortedData[variable_index]);
-	}
-
 
 	private double calculateError(int m) 
 	{
@@ -177,5 +164,28 @@ public class AdaBoost
 		}
 		// return -1 if the weighted classification is smaller than 0, and 1 otherwise
 		return cumulativeValue < 0 ? -1 : 1;
+	}
+	
+	private void createMappingFromMailToOriginalIndex()
+	{
+		mapMailToOriginalIndex = new HashMap<Mail, Integer>();
+		for (int i = 0; i < dataset.size(); i++)
+			mapMailToOriginalIndex.put(dataset.get(i), i);
+	}
+	
+	public Mail getOriginalFromSortedIndex(int sortedIndex, int variable_index)
+	{
+		return dataset.get(sortedOrderOfMails[variable_index][sortedIndex]);
+	}
+	
+	public int getOriginalIndex(Mail targetMail)
+	{
+		return mapMailToOriginalIndex.get(targetMail);
+	}
+	
+	public double getVariableValue(Mail targetMail, int variable_index)
+	{
+		int mail_index = mapMailToOriginalIndex.get(targetMail);
+		return dataset.get(mail_index).x[variable_index];
 	}
 }

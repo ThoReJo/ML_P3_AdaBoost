@@ -10,8 +10,6 @@ public class BaseLearner {
 	private int var_index;
 	// the threshhold b <- R
 	private double b;
-	// the sorted dataSet
-	private DataPair[][] sortedData;
 	
 	// the cumulative weight of all spam
 	private double w_plus_all;
@@ -23,10 +21,9 @@ public class BaseLearner {
 	//
 	private double[] weights;
 	
-	public BaseLearner(DataPair[][] sortedData, double[] weights, int variable, AdaBoost adaBoost) {
+	public BaseLearner(double[] weights, int variable, AdaBoost adaBoost) {
 		a = (int) (b = w_plus_all = w_minus_all = 0);
 		var_index = variable;
-		this.sortedData = sortedData;
 		this.weights = weights;
 		parent = adaBoost;
 		// TODO Auto-generated constructor stub
@@ -39,14 +36,14 @@ public class BaseLearner {
 	{
 		// TODO Auto-generated method stub
 		//
-		DataPair[] current_feature = sortedData[var_index];
 		// calculate w_- and w_+
-		for (int i = 0; i < current_feature.length; i++)
+		for (int i = 0; i < parent.dataset.size(); i++)
 		{
-			if (parent.dataset.get(current_feature[i].x_index).y < 0)
-				w_minus_all += weights[current_feature[i].x_index];
+			Mail currentMail = parent.getOriginalFromSortedIndex(i, var_index);
+			if (currentMail.y < 0)
+				w_minus_all += weights[parent.getOriginalIndex(currentMail)];
 			else
-				w_plus_all += weights[current_feature[i].x_index];
+				w_plus_all += weights[parent.getOriginalIndex(currentMail)];
 		}
 		
 		// TODO
@@ -63,14 +60,17 @@ public class BaseLearner {
 		
 		
 		// 
-		for (int i = 0; i < current_feature.length; i++)
+		for (int i = 0; i < parent.dataset.size(); i++)
 		{
-			if (parent.dataset.get(current_feature[i].x_index).y < 0)
-				w_minus_A += weights[current_feature[i].x_index];
+			Mail currentMail = parent.getOriginalFromSortedIndex(i, var_index);
+			int currentMail_index = parent.getOriginalIndex(currentMail);
+			if (currentMail.y < 0)
+				w_minus_A += weights[currentMail_index];
 			else
-				w_plus_A += weights[current_feature[i].x_index];
+				w_plus_A += weights[currentMail_index];
 			// add the weighted classification to the cumulative classification
-			classification += weights[current_feature[i].x_index] * parent.dataset.get(current_feature[i].x_index).y;
+			classification += weights[currentMail_index] * currentMail.y;
+			
 			double w_minus_B = w_minus_all - w_minus_A;
 			double w_plus_B = w_plus_all - w_plus_A;
 			double p_B = (w_minus_B + w_plus_B) == 0 ? 0 : w_plus_B / (w_minus_B + w_plus_B);
@@ -84,7 +84,7 @@ public class BaseLearner {
 				e_min = e;
 				// TODO checken!
 				
-				x_min = current_feature[i].x_index;
+				x_min = currentMail_index;
 				classification_min = classification;
 			}
 		}
